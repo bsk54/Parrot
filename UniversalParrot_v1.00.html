@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--****************************************************************************************************-->
+<!--************************************** The Universal Parrot ****************************************-->
+<!--**************************************** December 6, 2024 ******************************************-->
+<!--****************************************************************************************************-->
+<!--****************************************** Version 1.01 ********************************************-->
+<!--**************************************** December 6, 2024 ******************************************-->
+<!--****************************************************************************************************-->
+<!-------------------------------------------------------------------------------------------------------->
+<!------------------------------------ Code by: Bernd Sebastian Kamps ------------------------------------>
+<!-------------------------------------------------------------------------------------------------------->
+<!-- Description: Universal Parrot is a web-based tool for the efficient translation, extraction, -------->
+<!-- storage and export of text and vocabulary. ---------------------------------------------------------->
+<!--****************************************************************************************************-->
+<!-- Repository: https://github.com/bsk54/UniversalParrot.git -------------------------------------------->
+<!-- Web site: https://aioPop.com/Parrot ----------------------------------------------------------------->
+<!--****************************************************************************************************-->
+<!--****************************************************************************************************-->
+
+<head>
+    <meta charset="UTF-8">
+    <!-- Google Fonts Link for Noto Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
+   
+   <title>Universal Parrot - Speaking the Languages of the World</title>
+    <!--link rel="stylesheet" href="parrot_styles.css"-->
+<!--
+	^([^[]*)\[[^]]*\]
+\1*
+-->
+<style>
+
+
+/* Basic Reset */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* CSS Variables */
+:root {
+    /* Button Sizes */
+    --button-size-min: 50px;
+    --button-size-max: 100px;
+    --button-size: clamp(var(--button-size-min), 5vw, var(--button-size-max));
+
+    /* Font Sizes */
+    --subtitle-size: 18px;
+    --table-font-size: 16px;
+
+    /* Content Padding */
+    --content-right-padding: 60px;
+    --mobile-padding-right: 20px;
+    --left-content-padding: 20px;
+
+    /* Sidebar Button Labels (Optional if using pseudo-elements) */
+    --sidebar-button-labels: "Menu", "N", "-", "Play", "+", "Edit", "GPT";
+}
+
+/* Body Styles */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    background-color: #ffffff;
+    font-family: 'Noto Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px;
+    position: relative;
+}
+
+/* Night Mode Styles */
+body.night-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+body.night-mode .navigation,
+body.night-mode .display-window,
+body.night-mode .edit-window {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+}
+
+body.night-mode table {
+    background-color: #2c2c2c;
+    border: 1px solid #444;
+}
+
+body.night-mode table td {
+    border: 1px solid #444;
+}
+
+body.night-mode .navigation li,
+body.night-mode .navigation li.folder::before,
+body.night-mode .navigation li.text::before,
+body.night-mode .navigation .item-buttons button {
+    color: #e0e0e0;
+}
+
+body.night-mode .edit-window textarea {
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+}
+
+
+
+table, th, td {
+    font-family: 'Noto Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Optional: Target pinyin cells for specific styling */
+.pinyin-cell {
+    font-family: 'Noto Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Additional styles if needed */
+}
+
+
+
+/* Navigation Overlay */
+.navigation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.navigation-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* Navigation Window */
+.navigation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 400px;
+    height: 100%;
+    background-color: #ffffff;
+    border-right: 1px solid #ccc;
+    padding: 15px;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 999;
+}
+
+.navigation.active {
+    transform: translateX(0);
+}
+
+/* Close Button for Navigation */
+.navigation .close-nav-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #555;
+}
+
+.navigation .close-nav-btn:hover {
+    color: #000;
+}
+
+/* Navigation Header */
+.navigation h2 {
+    margin: 20px 0 15px;
+    font-size: 1.2rem;
+    text-align: center;
+    color: #333;
+}
+
+/* Navigation List */
+.navigation ul {
+    list-style: none;
+}
+
+.navigation li {
+    cursor: pointer;
+    padding: 5px;
+    position: relative;
+    font-size: 0.875rem;
+    color: #555;
+}
+
+/* Folder and File Icons */
+.navigation li.folder::before {
+    content: '📁';
+    margin-right: 5px;
+}
+
+.navigation li.folder.expanded::before {
+    content: '📂';
+}
+
+.navigation li.text::before {
+    content: '📄';
+    margin-right: 5px;
+}
+
+/* Nested Lists */
+.navigation li ul {
+    list-style: none;
+    padding-left: 10px;
+    display: none;
+}
+
+.navigation li.expanded > ul {
+    display: block;
+}
+
+/* Item Buttons */
+.navigation .item-buttons {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 5px;
+}
+
+.navigation .item-buttons button {
+    width: var(--button-size);
+    height: var(--button-size);
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #555;
+    transition: color 0.2s ease;
+}
+
+.navigation .item-buttons button:hover,
+.navigation .item-buttons button:focus {
+    color: #000;
+    outline: none;
+}
+
+/* Add and Export Buttons */
+.navigation .button-group {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.navigation .export-button,
+.navigation .add-first-level-button,
+.navigation .add-subfolder-button {
+    padding: 5px 10px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.navigation .export-button {
+    flex: 1;
+    background-color: #4CAF50;
+    color: #ffffff;
+}
+
+.navigation .export-button:hover {
+    background-color: #45a049;
+}
+
+.navigation .add-first-level-button,
+.navigation .add-subfolder-button {
+    background-color: #fbfbfb;
+    color: #444444;
+    border: 1px solid #f0f0f0;
+}
+
+.navigation .add-first-level-button {
+    align-self: flex-start;
+    margin-top: 10px;
+    margin-left: 10px;
+}
+
+.navigation .add-first-level-button:hover,
+.navigation .add-subfolder-button:hover {
+    background-color: #e0e0e0;
+}
+
+/* Display Window */
+.display-window {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    padding: 0 60px 0 20px;
+    background-color: #ffffff;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+/* Header */
+.display-window header {
+    background-color: #fff;
+    font-size: 1.25rem;
+    text-align: center;
+    padding: 10px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.display-window header span#current-text-name {
+    font-weight: bold;
+}
+
+/* Main Content */
+.display-window main {
+    margin-top: 20px;
+}
+
+/* Controls Section */
+.display-window .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.language-selection,
+.speech-speed-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.language-selection label,
+.speech-speed-control label {
+    font-size: 1rem;
+}
+
+.display-window .controls select,
+.display-window .controls input[type="range"] {
+    padding: 5px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.display-window .speech-speed-value {
+    font-size: 1rem;
+}
+
+/* Font Size Adjustment Buttons */
+.display-window .font-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.display-window .font-buttons button {
+    width: var(--button-size);
+    height: var(--button-size);
+    font-size: 1rem;
+    background-color: yellow;
+    opacity: 0.7;
+    border: none;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: opacity 0.3s;
+}
+
+.display-window .font-buttons button:hover,
+.display-window .font-buttons button:focus {
+    opacity: 1;
+    outline: none;
+}
+
+/* Subtitles */
+.display-window .subtitle {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.125rem;
+    margin: 50px 0 10px;
+}
+
+/* Tables */
+.display-window table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    border: 0;
+    font-family: Verdana, sans-serif;
+}
+
+.display-window table td {
+    border: 0;
+    padding: 10px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.display-window table td:hover,
+.display-window table td:focus {
+    background-color: #f0f0f0;
+    outline: none;
+}
+
+.display-window .highlight {
+    background-color: yellow;
+}
+
+/* Edit Window */
+.display-window .edit-window {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 500px;
+    background-color: #fff;
+    border: 2px solid #000;
+    padding: 20px;
+    z-index: 2000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.display-window .edit-window.hidden {
+    display: none;
+}
+
+.display-window .edit-window textarea {
+    width: 100%;
+    height: 100px;
+    font-size: 1rem;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.display-window .edit-window button#save-edited-text {
+    margin-top: 10px;
+    padding: 5px 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    transition: background-color 0.3s;
+}
+
+.display-window .edit-window button#save-edited-text:hover,
+.display-window .edit-window button#save-edited-text:focus {
+    background-color: #45a049;
+    outline: none;
+}
+
+.display-window .edit-window .close-btn {
+    float: right;
+    cursor: pointer;
+    font-size: 1.25rem;
+    border: none;
+    background: none;
+    color: #555;
+    transition: color 0.2s ease;
+}
+
+.display-window .edit-window .close-btn:hover,
+.display-window .edit-window .close-btn:focus {
+    color: #000;
+    outline: none;
+}
+
+/* Scrollbar Styling (Optional) */
+.navigation::-webkit-scrollbar,
+.display-window::-webkit-scrollbar {
+    width: 8px;
+}
+
+.navigation::-webkit-scrollbar-track,
+.display-window::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.navigation::-webkit-scrollbar-thumb,
+.display-window::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.navigation::-webkit-scrollbar-thumb:hover,
+.display-window::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Toggle Nav Button */
+.toggle-nav-button {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    z-index: 1001;
+    font-size: 1.25rem;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-nav-button:hover,
+.toggle-nav-button:focus {
+    background-color: #45a049;
+    outline: none;
+}
+
+/* Sidebar Buttons */
+.sidebar {
+    position: fixed;
+    right: 0;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1001;
+}
+
+.sidebar button {
+    width: var(--button-size);
+    height: var(--button-size);
+    background-color: yellow;
+    opacity: 0.7;
+    border: none;
+    cursor: pointer;
+    border-radius: 50%;
+    font-size: var(--table-font-size);
+    transition: opacity 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar button:hover {
+    opacity: 1;
+}
+
+
+
+
+
+
+
+
+/* Menu Header Styles */
+.menu-header {
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 10px 0 5px 5px;
+    color: #333;
+    cursor: default; /* Indicates non-clickable */
+}
+
+.menu-header::before {
+    content: '• '; /* Optional: Add a bullet or icon for visual hierarchy */
+    color: transparent; /* Hide any default icons if necessary */
+}
+
+.menu-submenu li.menu-header:hover {
+    background-color: transparent; /* Prevent hover effects */
+}
+
+
+
+/* Submenu Styles */
+.submenu {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #000;
+    display: none;
+    z-index: 1002;
+    padding: 15px; /* Increased from 10px for more internal spacing */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    max-height: 500px; /* Increased from 400px for more vertical space */
+    overflow-y: auto;
+    width: 400px; /* Increased from 200px for wider submenu */
+    font-size: 1.1rem; /* Optional: Increased font size for readability */
+}
+
+.submenu.active {
+    display: block;
+}
+
+.submenu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.submenu li {
+    cursor: pointer;
+    margin: 5px 0;
+    font-size: 1.1rem; /* Ensures list items match the submenu font size */
+}
+
+.submenu li:hover {
+    background-color: #f0f0f0;
+}
+
+/* Responsive Design: Adjust submenu for smaller screens */
+@media (max-width: 600px) {
+    .submenu {
+        width: 80%; /* Makes submenu take up 80% of viewport width */
+        max-height: 300px; /* Reduces max-height for smaller screens */
+        padding: 10px; /* Slightly reduced padding */
+        font-size: 1rem; /* Adjust font size for smaller screens */
+    }
+    
+    .submenu li {
+        font-size: 1rem; /* Matches the submenu font size */
+    }
+}
+
+
+/* Close Button */
+.close-btn {
+    float: right;
+    cursor: pointer;
+    font-size: var(--table-font-size);
+    border: none;
+    background: none;
+}
+
+/* Media Queries */
+/* Responsive Design for Mobile Devices */
+@media screen and (max-width: 768px) {
+    /* Navigation */
+    .navigation {
+        width: 80%;
+    }
+
+    /* Display Window */
+    .display-window {
+        padding-right: var(--mobile-padding-right);
+    }
+
+    /* Controls */
+    .controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .language-selection,
+    .speech-speed-control {
+        width: 100%;
+    }
+
+    .controls label,
+    .controls select,
+    .controls input[type="range"],
+    .speech-speed-value,
+    .font-buttons {
+        margin-bottom: 10px;
+        width: 100%;
+    }
+
+    /* Adjust Font Sizes */
+    .display-window header {
+        font-size: 1.5rem;
+    }
+
+    .display-window .subtitle {
+        font-size: 1.25rem;
+    }
+
+    .navigation li,
+    .navigation .item-buttons button,
+    .navigation h2,
+    .navigation .export-button,
+    .navigation .add-first-level-button,
+    .navigation .add-subfolder-button,
+    .display-window table,
+    .display-window .controls select,
+    .display-window .controls input[type="range"],
+    .display-window .font-buttons button {
+        font-size: 1rem;
+    }
+
+    /* Sidebar Buttons */
+    .sidebar button {
+        width: clamp(var(--button-size-min), 10vw, var(--button-size-max));
+        height: clamp(var(--button-size-min), 10vw, var(--button-size-max));
+    }
+}
+
+/* Responsive adjustments for landscape orientation on tablets */
+@media (orientation: landscape) and (max-width: 800px) {
+    .display-window {
+        padding-right: var(--content-right-padding);
+    }
+
+    .sidebar {
+        top: 60px;
+    }
+
+    .navigation {
+        width: 200px;
+    }
+}
+
+/* Adjust Navigation Width for Small Screens */
+@media screen and (max-width: 400px) {
+    .navigation {
+        width: 90%;
+    }
+}
+
+
+/* Position the slider container next to the "L" button */
+#pause-length-slider-container {
+    /* Display settings */
+    display: none; /* Initially hidden; controlled via JavaScript */
+
+    /* Positioning */
+    position: fixed;        /* Fixes the container relative to the viewport */
+    right: 100px;           /* 100 pixels from the right edge */
+    top: 50%;               /* Vertically centered */
+    transform: translateY(-50%); /* Adjusts the container to be perfectly centered vertically */
+
+    /* Appearance */
+    background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+    padding: 10px 15px;                          /* Padding inside the container */
+    border: 1px solid #ccc;                      /* Light gray border */
+    border-radius: 8px;                          /* Rounded corners */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);    /* Subtle shadow for depth */
+
+    /* Transition for smooth appearance/disappearance */
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+
+    /* Ensure the container is above other elements */
+    z-index: 1000;
+}
+
+/* Active State: Visible Slider */
+#pause-length-slider-container.active {
+    display: block;                /* Makes the container visible */
+    opacity: 1;                    /* Fully opaque */
+    visibility: visible;           /* Ensures it's visible in the layout */
+}
+
+/* Hidden State: Invisible Slider */
+#pause-length-slider-container.hidden {
+    opacity: 0;                    /* Fully transparent */
+    visibility: hidden;            /* Hides the container from the layout */
+}
+
+
+
+/* Default hidden state for edit/delete buttons */
+.navigation .item-buttons {
+    display: none;
+}
+
+/* Visible state when edit mode is enabled */
+.navigation.edit-mode .item-buttons {
+    display: flex;
+}
+
+
+
+
+/* Voice Selection Styling */
+.language-selection label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.language-selection select {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 5px;
+    font-size: 1rem;
+}
+
+.language-selection button {
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+
+
+
+
+
+
+
+
+
+/* Language and Voice Selection Styling */
+.language-selection {
+    width: 100%;
+    max-width: 1600px;
+    margin: 20px auto;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.language-selection label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.language-selection select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.language-selection button {
+    margin-top: 10px;
+    padding: 8px 12px;
+    font-size: .8rem;
+    cursor: pointer;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+}
+
+.language-selection button:hover {
+    background-color: #0056b3;
+}
+
+
+
+
+
+
+
+
+/* Controls Section Styling */
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Space between rows */
+    padding: 20px;
+    background-color: #f9f9f9; /* Light background for contrast */
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Each Control Row */
+.control-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px; /* Space between groups within a row */
+    align-items: center;
+}
+
+/* Control Group Styling */
+.control-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 150px; /* Minimum width for consistency */
+}
+
+/* Labels */
+.control-group label {
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+}
+
+/* Select Dropdowns */
+.control-group select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: #fff;
+    transition: border-color 0.3s;
+}
+
+.control-group select:focus {
+    border-color: #007BFF; /* Highlight border on focus */
+    outline: none;
+}
+
+/* Test Voice Buttons */
+.control-group button {
+    padding: 8px 12px;
+    margin-top: 0px; /* Align with the select dropdowns */
+    border: none;
+    border-radius: 4px;
+	width: 60px;
+    background-color: #28a745; /* Green background */
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.control-group button:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+.control-group button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.5); /* Focus ring */
+}
+
+/* Speech Speed Control */
+.speech-speed-control {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.speech-speed-control label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+}
+
+.speech-speed-control input[type="range"] {
+    width: 100%;
+    max-width: 300px; /* Limit the width on larger screens */
+    cursor: pointer;
+}
+
+.speech-speed-value {
+    font-size: 14px;
+    color: #555;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .control-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .control-group {
+        min-width: 100%;
+    }
+
+    .speech-speed-control input[type="range"] {
+        max-width: 100%;
+    }
+}
+
+
+
+/* Overlay Styles */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000; /* Ensure it's on top */
+}
+
+/* Input Window Styles */
+.input-window {
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+/* Form Group Styles */
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* Radio Buttons Layout */
+.form-group label {
+    margin-right: 20px;
+    font-weight: normal;
+}
+
+/* Input and Textarea Styles */
+.input-window input[type="text"],
+.input-window textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+/* Buttons Layout */
+.form-actions {
+    text-align: right;
+}
+
+.form-actions button {
+    padding: 8px 16px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.form-actions button[type="submit"] {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.form-actions button#cancelButton {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .input-window {
+        padding: 15px 20px;
+    }
+}
+
+
+
+</style>	
+</head>
+<body>
+    <!-- Navigation Overlay -->
+    <div class="navigation-overlay" onclick="toggleNavigation()" aria-hidden="true"></div>
+
+    <!-- Navigation Window -->
+    <nav class="navigation" aria-label="Main Navigation">
+        <!-- Close Button -->
+        <button class="close-nav-btn" onclick="toggleNavigation()" aria-label="Close Navigation">✖</button>
+        <h2>Universal Parrot</h2>
+        <ul id="nav-list">
+            <!-- Example Folder Item -->
+            <li class="folder expanded">
+                Folder Name
+                <div class="item-buttons">
+                    <button title="Edit" aria-label="Edit Folder">✏️</button>
+                    <button title="Delete" aria-label="Delete Folder">🗑</button>
+                </div>
+                <ul>
+                    <!-- Nested Text Item -->
+                    <li class="text">
+                        Text Item Name
+                        <div class="item-buttons">
+                            <button title="Edit" aria-label="Edit Text">✏️</button>
+                            <button title="Delete" aria-label="Delete Text">🗑</button>
+                        </div>
+                    </li>
+                    <!-- Add more nested items as needed -->
+                </ul>
+            </li>
+            <!-- Example Text Item -->
+            <li class="text">
+                Another Text Item
+                <div class="item-buttons">
+                    <button title="Edit" aria-label="Edit Text">✏️</button>
+                    <button title="Delete" aria-label="Delete Text">🗑</button>
+                </div>
+            </li>
+            <!-- Add more folders or texts dynamically via JavaScript -->
+        </ul>
+        <div class="button-group">
+            <button class="add-first-level-button" onclick="addNewItem()" aria-label="Add First Level Item">Add 1st Level</button>
+            <button class="export-button" onclick="exportDatabase()" aria-label="Export Database">Export</button>
+        </div>
+    </nav>
+
+    <!-- Toggle Navigation Button (Visible on Mobile) -->
+    <button class="toggle-nav-button" onclick="toggleNavigation()" aria-label="Open Navigation">☰</button>
+
+    <!-- Sidebar Buttons -->
+    <div class="sidebar">
+        <!-- Menu Button at the Top -->
+        <button id="menu-button-sidebar" title="Menu" style="position: relative; z-index: 1003;">☰</button>
+        <!-- Night Mode Button -->
+        <button id="toggle-night-mode" title="Night Mode" aria-label="Toggle Night Mode">N</button>
+        <button id="prev-word" title="Previous Word" aria-label="Previous Word">−</button>
+        <button id="play-pause" title="Play/Pause" aria-label="Play or Pause Playback">Play</button>
+        <button id="next-word" title="Next Word" aria-label="Next Word">+</button>
+		<!--button id="select-text" title="Show Text" aria-label="Show or Hide Text">Show</button--> <!-- Initially "Show" since navigation is hidden -->
+        <button id="toggle-edit" title="Edit Mode" aria-label="Toggle Edit Mode">✏️</button>
+
+        <button id="custom-gpt" title="Custom GPT" aria-label="Custom GPT">GPT</button>
+        <!-- Submenu moved to the sidebar -->
+		<div class="submenu" id="menu-submenu">
+<ul id="menu-submenu">
+    <!-- Headline: Copy to Clipboard -->
+    <li class="menu-header" aria-hidden="true">Copy Current Text to Clipboard</li>
+    <li onclick="export2WS()" aria-label="Copy Word Siren">Word Siren</li>
+    <li onclick="export2WSPocket()" aria-label="Copy Siren Pocket">Cristinas Garden</li>
+    <li onclick="copyToParrot()" aria-label="Copy Parrot">Universal Parrot</li> <!-- Placeholder for future implementation -->
+    
+    <!-- Headline: System -->
+    <li class="menu-header" aria-hidden="true">System</li>
+    <li onclick="exportDatabase()" aria-label="Save Database">Save Database to Disk</li>
+    <li onclick="retrieveDB()" aria-label="Load Database">Load Database</li>
+</ul>
+		</div>
+    </div>
+
+
+<div id="pause-length-slider-container" style="display: none; position: absolute; right: 60px;">
+    <input type="range" id="pause-length-slider" min="1000" max="10000" step="500" value="1000">
+    <span id="pause-length-value">1000 ms</span>
+</div>
+
+    <!-- Central Display Window -->
+    <div class="display-window" id="display-window">
+        <!-- Header -->
+        <header>
+            Universal Parrot - <span id="current-text-name">Hello World</span>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Controls Section -->
+            <div class="controls">
+                <!-- Language Selection -->
+
+
+
+
+<div class="language-selection">
+    <!-- Language 1 Selection -->
+    <label for="language1">Language 1:</label>
+    <select id="language1" aria-label="Select Language 1">
+        <!-- Options will be populated dynamically via JavaScript -->
+    </select>
+
+    <!-- Voice Selection for Language 1 -->
+    <label for="voiceSelect1">Voice 1:</label>
+    <select id="voiceSelect1" aria-label="Select Voice for Language 1">
+        <!-- Options will be populated dynamically via JavaScript -->
+    </select>
+    <button onclick="testVoice('voiceSelect1')" aria-label="Test Voice for Language 1">Test Voice</button>
+
+    <!-- Language 2 Selection -->
+    <label for="language2">Language 2:</label>
+    <select id="language2" aria-label="Select Language 2">
+        <!-- Options will be populated dynamically via JavaScript -->
+    </select>
+
+    <!-- Voice Selection for Language 2 -->
+    <label for="voiceSelect2">Voice 2:</label>
+    <select id="voiceSelect2" aria-label="Select Voice for Language 2">
+        <!-- Options will be populated dynamically via JavaScript -->
+    </select>
+    <button onclick="testVoice('voiceSelect2')" aria-label="Test Voice for Language 2">Test Voice</button>
+</div>
+
+ 
+ 
+ 
+ 
+ 
+               <!-- Speech Speed Control -->
+                <div class="speech-speed-control">
+                    <label for="speechSpeed">Speech Speed:</label>
+                    <input type="range" id="speechSpeed" min="0.5" max="2" step="0.1" value="1" aria-label="Adjust Speech Speed">
+                    <div class="speech-speed-value">Current Speed: <span id="speed-value">1</span></div>
+                </div>
+
+                <!-- Font Size Adjustment Buttons -->
+                <!--div class="font-buttons">
+                    <button id="decrease-font" title="Decrease Font Size" aria-label="Decrease Font Size">F-</button>
+                    <button id="increase-font" title="Increase Font Size" aria-label="Increase Font Size">F+</button>
+                </div-->
+            </div>
+
+            <!-- Sentences Section -->
+            <div class="subtitle">Sentences</div>
+            <table id="sentences-table">
+                <tbody>
+                    <!-- Sentences will be dynamically populated here -->
+                </tbody>
+            </table>
+
+            <!-- Words Section -->
+            <div class="subtitle">Words</div>
+            <table id="words-table">
+                <tbody>
+                    <!-- Words will be dynamically populated here -->
+                </tbody>
+            </table>
+        </main>
+
+        <!-- Edit Window -->
+        <div class="edit-window hidden" id="edit-window" role="dialog" aria-modal="true" aria-labelledby="edit-window-title">
+            <button class="close-btn" onclick="closeEditWindow()" aria-label="Close Edit Window">✖</button>
+            <h2 id="edit-window-title">Edit Entry</h2>
+            <textarea id="edit-textarea" aria-label="Edit Text Area"></textarea>
+            <button id="save-edited-text" onclick="saveEditedEntry()" aria-label="Save Edited Text">Save</button>
+        </div>
+    </div>
+	
+	
+	<!-- Central Input Window Overlay -->
+<div id="centralInputOverlay" class="overlay" style="display: none;">
+    <div class="input-window">
+        <h2>Add New Item</h2>
+        <form id="addItemForm">
+            <!-- Radio Buttons for Item Type -->
+            <div class="form-group">
+                <label>
+                    <input type="radio" name="itemType" value="text" checked>
+                    Text
+                </label>
+                <label>
+                    <input type="radio" name="itemType" value="folder">
+                    Folder
+                </label>
+            </div>
+            
+            <!-- Title Input -->
+            <div class="form-group">
+                <label for="itemTitle">Title:</label>
+                <input type="text" id="itemTitle" name="itemTitle" required>
+            </div>
+            
+            <!-- Textarea for Text Content -->
+            <div class="form-group" id="textContentGroup">
+                <label for="itemContent">Content:</label>
+                <textarea id="itemContent" name="itemContent" rows="10" placeholder="Enter text content here..."></textarea>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="form-actions">
+                <button type="submit">Add</button>
+                <button type="button" id="cancelButton">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+        <button id="decrease-font" title="Decrease Font Size" aria-label="Decrease Font Size">F-</button>
+        <button id="increase-font" title="Increase Font Size" aria-label="Increase Font Size">F+</button>
+
+    <!-- Include the JavaScript file -->
+	    <!--script src="languages.js"></script-->
+		
+<script>		
+const availableLanguages = [
+{ label: 'Chinese (Simplified)', code: 'zh-CN' },
+{ label: 'Chinese (Traditional)', code: 'zh-TW' },
+{ label: 'English (United Kingdom)', code: 'en-GB' },
+{ label: 'English (United States)', code: 'en-US' },
+{ label: 'French (France)', code: 'fr-FR' },
+{ label: 'German (Germany)', code: 'de-DE' },
+{ label: 'Italian (Italy)', code: 'it-IT' },
+{ label: 'Japanese (Japan)', code: 'ja-JP' },
+{ label: 'Portuguese (Brazil)', code: 'pt-BR' },
+{ label: 'Portuguese (Portugal)', code: 'pt-PT' },
+{ label: 'Russian (Russia)', code: 'ru-RU' },
+{ label: 'Spanish (Mexico)', code: 'es-MX' },
+{ label: 'Spanish (Spain)', code: 'es-ES' },
+{ label: 'Afrikaans (South Africa)', code: 'af-ZA' },
+{ label: 'Albanian (Albania)', code: 'sq-AL' },
+{ label: 'Amharic (Ethiopia)', code: 'am-ET' },
+{ label: 'Basque (Spain)', code: 'eu-ES' },
+{ label: 'Belarusian (Belarus)', code: 'be-BY' },
+{ label: 'Bengali (India)', code: 'bn-IN' },
+{ label: 'Bosnian (Bosnia and Herzegovina)', code: 'bs-BA' },
+{ label: 'Bulgarian (Bulgaria)', code: 'bg-BG' },
+{ label: 'Catalan (Spain)', code: 'ca-ES' },
+{ label: 'Catalan', code: 'ca' },
+{ label: 'Croatian (Croatia)', code: 'hr-HR' },
+{ label: 'Croatian', code: 'hr' },
+{ label: 'Czech (Czech Republic)', code: 'cs-CZ' },
+{ label: 'Czech', code: 'cs' },
+{ label: 'Danish (Denmark)', code: 'da-DK' },
+{ label: 'Danish', code: 'da' },
+{ label: 'Dutch (Netherlands)', code: 'nl-NL' },
+{ label: 'English (Australia)', code: 'en-AU' },
+{ label: 'English (Canada)', code: 'en-CA' },
+{ label: 'English (India)', code: 'en-IN' },
+{ label: 'Estonian (Estonia)', code: 'et-EE' },
+{ label: 'Filipino (Philippines)', code: 'fil-PH' },
+{ label: 'Finnish (Finland)', code: 'fi-FI' },
+{ label: 'French (Canada)', code: 'fr-CA' },
+{ label: 'Georgian (Georgia)', code: 'ka-GE' },
+{ label: 'Greek (Greece)', code: 'el-GR' },
+{ label: 'Gujarati (India)', code: 'gu-IN' },
+{ label: 'Hebrew (Israel)', code: 'he-IL' },
+{ label: 'Hindi (India)', code: 'hi-IN' },
+{ label: 'Hungarian (Hungary)', code: 'hu-HU' },
+{ label: 'Hungarian', code: 'hu' },
+{ label: 'Icelandic (Iceland)', code: 'is-IS' },
+{ label: 'Indonesian (Indonesia)', code: 'id-ID' },
+{ label: 'Kannada (India)', code: 'kn-IN' },
+{ label: 'Kazakh (Kazakhstan)', code: 'kk-KZ' },
+{ label: 'Khmer (Cambodia)', code: 'km-KH' },
+{ label: 'Korean (South Korea)', code: 'ko-KR' },
+{ label: 'Lao (Laos)', code: 'lo-LA' },
+{ label: 'Latvian (Latvia)', code: 'lv-LV' },
+{ label: 'Lithuanian (Lithuania)', code: 'lt-LT' },
+{ label: 'Malay (Malaysia)', code: 'ms-MY' },
+{ label: 'Malayalam (India)', code: 'ml-IN' },
+{ label: 'Marathi (India)', code: 'mr-IN' },
+{ label: 'Mongolian (Mongolia)', code: 'mn-MN' },
+{ label: 'Nepali (Nepal)', code: 'ne-NP' },
+{ label: 'Norwegian Bokmål (Norway)', code: 'nb-NO' },
+{ label: 'Pashto (Afghanistan)', code: 'ps-AF' },
+{ label: 'Persian (Iran)', code: 'fa-IR' },
+{ label: 'Polish (Poland)', code: 'pl-PL' },
+{ label: 'Punjabi (India)', code: 'pa-IN' },
+{ label: 'Romanian (Romania)', code: 'ro-RO' },
+{ label: 'Serbian (Serbia)', code: 'sr-RS' },
+{ label: 'Sinhala (Sri Lanka)', code: 'si-LK' },
+{ label: 'Slovak (Slovakia)', code: 'sk-SK' },
+{ label: 'Slovenian (Slovenia)', code: 'sl-SI' },
+{ label: 'Somali (Somalia)', code: 'so-SO' },
+{ label: 'Swahili (Kenya)', code: 'sw-KE' },
+{ label: 'Swedish (Sweden)', code: 'sv-SE' },
+{ label: 'Tamil (India)', code: 'ta-IN' },
+{ label: 'Telugu (India)', code: 'te-IN' },
+{ label: 'Thai (Thailand)', code: 'th-TH' },
+{ label: 'Turkish (Turkey)', code: 'tr-TR' },
+{ label: 'Ukrainian (Ukraine)', code: 'uk-UA' },
+{ label: 'Urdu (Pakistan)', code: 'ur-PK' },
+{ label: 'Vietnamese (Vietnam)', code: 'vi-VN' },
+{ label: 'Welsh (United Kingdom)', code: 'cy-GB' },
+{ label: 'Xhosa (South Africa)', code: 'xh-ZA' },
+{ label: 'Yiddish (Israel)', code: 'yi-IL' },
+{ label: 'Yoruba (Nigeria)', code: 'yo-NG' },
+{ label: 'Zulu (South Africa)', code: 'zu-ZA' }
+];
+
+
+/*
+const availableLanguages = [
+    { label: 'Chinese (Mandarin)', code: 'zh-CN' },
+    { label: 'Chinese (Cantonese)', code: 'zh-HK' },
+    { label: 'Czech', code: 'cs-CZ' },
+    { label: 'Danish', code: 'da-DK' },
+    { label: 'Dutch', code: 'nl-NL' },
+    { label: 'English (US)', code: 'en-US' },
+    { label: 'English (UK)', code: 'en-GB' },
+    { label: 'Finnish', code: 'fi-FI' },
+    { label: 'French', code: 'fr-FR' },
+    { label: 'German', code: 'de-DE' },
+    { label: 'Greek', code: 'el-GR' },
+    { label: 'Hebrew', code: 'he-IL' },
+    { label: 'Hindi', code: 'hi-IN' },
+    { label: 'Hungarian', code: 'hu-HU' },
+    { label: 'Indonesian', code: 'id-ID' },
+    { label: 'Italian', code: 'it-IT' },
+    { label: 'Japanese', code: 'ja-JP' },
+    { label: 'Korean', code: 'ko-KR' },
+    { label: 'Malay', code: 'ms-MY' },
+    { label: 'Norwegian', code: 'no-NO' },
+    { label: 'Polish', code: 'pl-PL' },
+    { label: 'Portuguese (Brazil)', code: 'pt-BR' },
+    { label: 'Portuguese (Portugal)', code: 'pt-PT' },
+    { label: 'Romanian', code: 'ro-RO' },
+    { label: 'Russian', code: 'ru-RU' },
+    { label: 'Spanish (Mexico)', code: 'es-MX' },
+    { label: 'Spanish (Spain)', code: 'es-ES' },
+    { label: 'Swedish', code: 'sv-SE' },
+    { label: 'Thai', code: 'th-TH' },
+    { label: 'Turkish', code: 'tr-TR' },
+    { label: 'Vietnamese', code: 'vi-VN' }
+];
+*/
+
+
+
+		
+</script>
+    <script src="parrot_script.js"></script>
+</body>
+</html>
